@@ -1,0 +1,131 @@
+import time
+import random
+from machine import Pin, PWM
+import neopixel
+ 
+ 
+NUM_PIXELS = 24 
+LED_PIN = 11    
+np = neopixel.NeoPixel(Pin(LED_PIN), NUM_PIXELS)
+ 
+ 
+button_pin = Pin(12, Pin.IN, Pin.PULL_UP) 
+ 
+ 
+buzzer_pin = Pin(10, Pin.OUT)
+buzzer = PWM(buzzer_pin, freq=1000, duty=512) 
+ 
+ 
+reed_switch_pin = Pin(8, Pin.IN, Pin.PULL_UP) 
+ 
+ 
+FUR_ELISE_MELODY = [
+    (330, 0.25), 
+    (0, 0.25),   
+    (330, 0.25), 
+    (0, 0.25),   
+    (330, 0.25), 
+    (262, 0.25), 
+    (330, 0.25), 
+    (392, 0.25), 
+    (0, 0.25),   
+    (392, 0.25),
+    (440, 0.25), 
+    (330, 0.25), 
+    (440, 0.25), 
+    (392, 0.25), 
+    (330, 0.25), 
+    (262, 0.25),
+    (330, 0.25), 
+    (0, 0.25),   
+    (330, 0.25), 
+    (0, 0.25),  
+    (330, 0.25), 
+    (262, 0.25), 
+    (330, 0.25), 
+    (392, 0.25), 
+    (0, 0.25),  
+    (392, 0.25),
+    (440, 0.25),
+    (330, 0.25), 
+]
+ 
+ 
+ 
+def play_fur_elise():
+    """Play Für Elise melody when reed switch is activated."""
+    start_time = time.ticks_ms()
+    while time.ticks_diff(time.ticks_ms(), start_time) < 10000: 
+        for note, duration in FUR_ELISE_MELODY:
+            if note != 0:
+                buzzer.freq(note)
+                buzzer.duty(512) 
+            else:
+                buzzer.duty(0)
+            time.sleep(duration)
+            buzzer.duty(0) 
+            time.sleep(0.05) 
+ 
+def play_slot_machine_spin_sound():
+    """Generate a slot machine-style spinning sound effect using the buzzer."""
+    for _ in range(5):
+        
+        freq = random.randint(800, 1500)
+        buzzer.freq(freq) 
+        buzzer.duty(512)  
+        time.sleep(0.05) 
+    buzzer.duty(0) 
+ 
+def play_victory_sound(stop_num):
+    """Generate a victory sound effect with 'stop_num' beeps using the buzzer."""
+    for _ in range(stop_num): 
+        buzzer.freq(1500) 
+        buzzer.duty(512)  
+        time.sleep(0.2)  
+        buzzer.duty(0)   
+        time.sleep(0.1)   
+ 
+def spin_ring():
+  
+    num_spins = 1 
+ 
+    for spin in range(num_spins): 
+        for i in range(NUM_PIXELS): 
+            np[i] = (100, 100, 200) 
+            np.write() 
+            play_slot_machine_spin_sound()
+            time.sleep(0.003) 
+            np[i] = (0, 0, 0)
+        time.sleep(0.0) 
+ 
+def choose_number():
+   
+    stop_num = random.randint(1, NUM_PIXELS)
+    print(f"Number: {stop_num}") 
+    
+   
+    for i in range(stop_num):
+        np[i] = (255, 0, 100) 
+    np.write()
+ 
+    play_victory_sound(stop_num)
+ 
+def reset_ring():
+   
+    for i in range(NUM_PIXELS):
+        np[i] = (0, 0, 0) 
+    np.write()
+ 
+ 
+while True:
+    if button_pin.value() == 0: 
+        print("Button Pressed! Spinning the ring...")
+        reset_ring()
+        spin_ring() 
+        choose_number() 
+    
+    if reed_switch_pin.value() == 0:
+        print("Reed Switch Activated! Playing Für Elise...")
+        play_fur_elise() 
+ 
+    time.sleep(0.2)   
